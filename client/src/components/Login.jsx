@@ -1,15 +1,14 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
+import Dashboard from "./Dashboard";
 import { Link } from "react-router-dom";
-// import AuthContext from "./context/AuthProvider";
-import axios from "axios";
 
 function Login() {
+  // const navigate = useNavigate();
   const userRef = useRef();
   const errRef = useRef();
 
-  //   const [user, setUser] = useState("");
-  const [email, setEmail] = useState("");
-  const [pwd, setPwd] = useState("");
+  const [credentials, setCredentials] = useState({});
+
   const [errMsg, setErrMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -19,25 +18,42 @@ function Login() {
 
   useEffect(() => {
     setErrMsg("");
-  }, [email, pwd]);
+  }, [credentials]);
+
+  function handleChange(e) {
+    setCredentials({
+      ...credentials,
+      [e.target.name]: e.target.value,
+    });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    console.log(email, pwd); //////////
-    setEmail("");
-    setPwd("");
-    setSuccess(!success);
+    fetch("http://localhost:8080/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success === true) {
+          const token = result.token;
+          //put the token in local storage
+          localStorage.setItem("jsonwebtoken", token);
+        }
+        setSuccess(!success);
+        setCredentials({
+          ...credentials,
+          [e.target.name]: "",
+        });
+      });
   }
   return (
     <>
       {success ? (
-        <section>
-          <h1>You are loged in!</h1>
-          <br />
-          <p>
-            <a href="#">Go to Home</a>
-          </p>
-        </section>
+        <Dashboard />
       ) : (
         <section>
           <p
@@ -49,22 +65,22 @@ function Login() {
           </p>
           <h1>Log In</h1>
           <form onSubmit={handleSubmit}>
-            <label htmlFor="email">Email:</label>
+            <label htmlFor="username">Username:</label>
             <input
               type="text"
-              id="email"
+              id="username"
+              name="username"
               ref={userRef}
               autoComplete="off"
-              onChange={(e) => setEmail(e.target.value)}
-              value={email}
+              onChange={handleChange}
               required
             />
             <label htmlFor="password">Password:</label>
             <input
               type="password"
               id="password"
-              onChange={(e) => setPwd(e.target.value)}
-              value={pwd}
+              name="password"
+              onChange={handleChange}
               required
             />
             <button>Log In</button>
@@ -74,7 +90,7 @@ function Login() {
             <br />
             <span className="line">
               {/* React Router link here */}
-              <Link to={"/register"}>Sign Up</Link>
+              <Link to="/">Sign Up</Link>
             </span>
           </p>
         </section>
